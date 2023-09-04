@@ -46,6 +46,7 @@ private JSONParser jsonParser;
         catch (Exception e)
         {
             e.printStackTrace();
+            weatherInformation = null;
         }
         return weatherInformation;
     }
@@ -71,5 +72,4 @@ private JSONParser jsonParser;
         jsonObject.put("wind_spd_kt",weatherData.get(16));
         return jsonObject.toJSONString();
     }
-
 }

@@ -4,12 +4,13 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+
 
 public class AggregationServer {
 
 
+   public static WeatherInformation weatherInformation = null;
+   public static   String jsonWeatherData = "";
     public static void main(String[] args)
     {
 
@@ -37,16 +38,15 @@ public class AggregationServer {
             e.printStackTrace();
         }
     }
-    static  void handleClientRequest(Socket socket)
+    public static  void handleClientRequest(Socket socket)
     {
-        WeatherInformation weatherInformation = null;
         BufferedReader socketReader = null;
         PrintWriter socketWriter = null;
         try{
             socketReader = new BufferedReader(
                     new InputStreamReader(socket.getInputStream()));
             socketWriter = new PrintWriter(socket.getOutputStream());
-            String response = "default";
+            String response = "";
             String httpMessage = "";
             String inMsg = null;
             while(true)
@@ -55,55 +55,54 @@ public class AggregationServer {
                 if(inMsg != null && inMsg.length() > 0)
                 {
                     httpMessage += (inMsg + "\n");
-                    response = "Transfering";
                 }
                 else{
                     if(httpMessage.startsWith("PUT"))
                     {
                         String[] lineMsg = httpMessage.split("\n");
+
                         if(weatherInformation == null)
                         {
                             weatherInformation = JsonParser.getInstance().readJson(lineMsg[4]);
-                            response = "HTTP/1.1 201 CREATED";
+                            if(weatherInformation != null)
+                            {
+                                response = "HTTP/1.1 201 CREATED";
+                                jsonWeatherData = lineMsg[4];
+                            }
+                            else
+                                response = "HTTP/1.1 500 INTERNAL_SERVER_ERROR";
                         }
                         else
                         {
-                            response = "HTTP/1.1 200 OK";
+                            weatherInformation = JsonParser.getInstance().readJson(lineMsg[4]);
+                            if(weatherInformation != null)
+                            {
+                                response = "HTTP/1.1 200 OK";
+                                jsonWeatherData = lineMsg[4];
+                            }
+                            else
+                                response = "HTTP/1.1 500 INTERNAL_SERVER_ERROR";
                         }
+                    }
+                    else if( httpMessage.startsWith("GET"))
+                    {
+                        response = "HTTP/1.1 200 OK\r\n";
+                        response += "Server: AggregationServer\r\n";
+                        response += "Content-Type: text/json\r\n";
+                        response += "Content-Length: " + jsonWeatherData.length()  + "\r\n";
+                        response += jsonWeatherData;
+                    }
+                    else
+                    {
+                        if(httpMessage.length() != 0)
+                            response = "HTTP/1.1 400 ERROR";
+                        else
+                            response = "HTTP/1.1 204 ERROR";
                     }
                 }
                 socketWriter.println(response);
                 socketWriter.flush();
             }
-           /* while(true)
-            {
-                String consoleMsg = inputScanner.nextLine();
-                if (consoleMsg.equalsIgnoreCase("close")) {
-                    break;
-                }
-                inMsg = socketReader.readLine();
-                System.out.println("Received from client: " + inMsg);
-                String outMsg = inMsg;
-                socketWriter.write(outMsg);
-                socketWriter.write("\n");
-                socketWriter.flush();
-                if(inMsg.startsWith("PUT"))
-                {
-                    if(weatherInformation == null)
-                    {
-                        weatherInformation = new WeatherInformation();
-                        weatherInformation = JsonParser.getInstance().readJson(httpContent[4]);
-                        socketWriter.write("HTTP/1.1 201 CREATED\n");
-                        socketWriter.flush();
-                    }
-                    else
-                    {
-                        socketWriter.write("HTTP/1.1 200 OK\n");
-                        socketWriter.flush();
-                    }
-                }
-
-            }*/
         }
         catch (Exception e)
         {
