@@ -1,18 +1,12 @@
 package assignment.weather;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 public class JsonParser {
 private static JsonParser instance;
-private JSONParser jsonParser;
     private JsonParser()
     {
-        jsonParser = new JSONParser();
+
     }
     public static synchronized JsonParser getInstance()
     {
@@ -24,24 +18,51 @@ private JSONParser jsonParser;
     {
         WeatherInformation weatherInformation = new WeatherInformation();
         try {
-            JSONObject jsonObj = (JSONObject) jsonParser.parse(jsonString);
-            weatherInformation.id = (String)jsonObj.get("id");
-            weatherInformation.name = (String)jsonObj.get("name");
-            weatherInformation.state = (String)jsonObj.get("state");
-            weatherInformation.timeZone = (String)jsonObj.get("timeZone");
-            weatherInformation.lat = (String) jsonObj.get("lat");
-            weatherInformation.lon = (String)jsonObj.get("lon");
-            weatherInformation.local_date_time = (String)jsonObj.get("local_date_time");
-            weatherInformation.local_date_time_full = (String)jsonObj.get("local_date_time_full");
-            weatherInformation.air_temp = (String) jsonObj.get("air_temp");
-            weatherInformation.apparent_t = (String) jsonObj.get("apparent_t");
-            weatherInformation.cloud = (String)jsonObj.get("cloud");
-            weatherInformation.dewpt = (String) jsonObj.get("dewpt");
-            weatherInformation.press = (String) jsonObj.get("press");
-            weatherInformation.rel_hum = (String) jsonObj.get("rel_hum");
-            weatherInformation.wind_dir = (String)jsonObj.get("wind_dir");
-            weatherInformation.wind_spd_kmh = (String) jsonObj.get("wind_spd_kmh");
-            weatherInformation.wind_spd_kt = (String) jsonObj.get("wind_spd_kt");
+            int indexOfOpenParenthesis = jsonString.indexOf("{");
+            int indexOfCloseParenthesis = jsonString.indexOf("}");
+            if(indexOfCloseParenthesis != -1 && indexOfCloseParenthesis != -1)
+            {
+                jsonString = jsonString.substring(indexOfOpenParenthesis + 1,indexOfCloseParenthesis);
+                String[] elements = jsonString.split(",");
+                if(elements.length != 17)
+                {
+                    weatherInformation = null;
+                }
+                else
+                {
+                    HashMap<String,String> mapperToken = new HashMap<>();
+                    for(int i =0; i < elements.length;i++)
+                    {
+                        String[] element = elements[i].split(":");
+                        element[0] = element[0].replaceAll("\"","");
+                        if(element[1].contains("\""))
+                        {
+                            element[1] = element[1].replaceAll("\"","");
+                        }
+                        mapperToken.put(element[0].trim(),element[1].trim());
+                    }
+                    weatherInformation.id = mapperToken.get("id");
+                    weatherInformation.name = mapperToken.get("name");
+                    weatherInformation.state = mapperToken.get("state");
+                    weatherInformation.timeZone = mapperToken.get("timeZone");
+                    weatherInformation.lat = Double.parseDouble(mapperToken.get("lat").trim());
+                    weatherInformation.lon = Double.parseDouble(mapperToken.get("lon"));
+                    weatherInformation.local_date_time = mapperToken.get("local_date_time");
+                    weatherInformation.local_date_time_full = mapperToken.get("local_date_time_full");
+                    weatherInformation.air_temp = Double.parseDouble(mapperToken.get("air_temp"));
+                    weatherInformation.apparent_t = Double.parseDouble(mapperToken.get("apparent_t"));
+                    weatherInformation.cloud = mapperToken.get("cloud");
+                    weatherInformation.dewpt = Double.parseDouble(mapperToken.get("dewpt"));
+                    weatherInformation.press = Double.parseDouble(mapperToken.get("press"));
+                    weatherInformation.rel_hum = Double.parseDouble(mapperToken.get("rel_hum"));
+                    weatherInformation.wind_dir = mapperToken.get("wind_dir");
+                    weatherInformation.wind_spd_kmh = Double.parseDouble(mapperToken.get("wind_spd_kmh"));
+                    weatherInformation.wind_spd_kt = Double.parseDouble(mapperToken.get("wind_spd_kt"));
+                }
+            }
+            else{
+                weatherInformation = null;
+            }
         }
         catch (Exception e)
         {
@@ -50,26 +71,31 @@ private JSONParser jsonParser;
         }
         return weatherInformation;
     }
-    public String writeJson(List<String> weatherData)
+    public String writeJson(LinkedHashMap<String,String> weatherData)
     {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id",weatherData.get(0));
-        jsonObject.put("name",weatherData.get(1));
-        jsonObject.put("state",weatherData.get(2));
-        jsonObject.put("timeZone",weatherData.get(3));
-        jsonObject.put("lat",weatherData.get(4));
-        jsonObject.put("lon",weatherData.get(5));
-        jsonObject.put("local_date_time",weatherData.get(6));
-        jsonObject.put("local_date_time_full",weatherData.get(7));
-        jsonObject.put("air_temp",weatherData.get(8));
-        jsonObject.put("apparent_t",weatherData.get(9));
-        jsonObject.put("cloud",weatherData.get(10));
-        jsonObject.put("dewpt",weatherData.get(11));
-        jsonObject.put("press",weatherData.get(12));
-        jsonObject.put("rel_hum",weatherData.get(13));
-        jsonObject.put("wind_dir",weatherData.get(14));
-        jsonObject.put("wind_spd_kmh",weatherData.get(15));
-        jsonObject.put("wind_spd_kt",weatherData.get(16));
-        return jsonObject.toJSONString();
+        String jsonString = "{";
+        for(Map.Entry<String,String> elements:weatherData.entrySet())
+        {
+            String element = elements.getKey();
+            element = "\"" + element + "\"" + " " + ":" + " ";
+            if(!element.contains("wind_spd_kt"))
+            {
+                try {
+                    double value = Double.parseDouble(elements.getValue());
+                    element += (value + ",");
+                } catch (Exception e) {
+                    element += ("\"" + elements.getValue() + "\"" + ",");
+                }
+
+            }
+            else
+            {
+                double value = Double.parseDouble(elements.getValue());
+                element += (value);
+            }
+            jsonString+=element;
+        }
+        jsonString+="}";
+        return jsonString;
     }
 }

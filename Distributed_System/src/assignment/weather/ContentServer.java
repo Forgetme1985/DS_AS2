@@ -1,12 +1,7 @@
 package assignment.weather;
 
 import java.io.*;
-import java.net.Socket;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class ContentServer extends WeatherConnection {
     public ContentServer(String serverAddress,File weatherFile) {
@@ -15,7 +10,7 @@ public class ContentServer extends WeatherConnection {
             while (!socket.isClosed()) {
                 Thread.sleep(3000);
                 System.out.println("Send data from content server");
-                List<String> weatherData = readingWeatherData(weatherFile);
+                LinkedHashMap<String,String> weatherData = readingWeatherData(weatherFile);
                 String httpPostMessage = "PUT /weather.json HTTP/1.1\r\n";
                 httpPostMessage += "User-Agent: ATOMClient/1/0\r\n";
                 httpPostMessage += "Content-Type: text/json\r\n";
@@ -64,13 +59,14 @@ public class ContentServer extends WeatherConnection {
             System.exit(0);
         }
     }
-    private  List<String> readingWeatherData(File weatherFile)
+    private LinkedHashMap<String,String> readingWeatherData(File weatherFile)
     {
-        List<String> weatherData = new ArrayList<>();
+        LinkedHashMap<String,String> weatherData = new LinkedHashMap<>();
         try {
             Scanner readingScanner = new Scanner(weatherFile);
             while (readingScanner.hasNextLine()) {
-                weatherData.add(readingScanner.nextLine());
+                String[] tokens = readingScanner.nextLine().split(":");
+                weatherData.put(tokens[0],tokens[1]);
             }
         }
         catch (Exception e)

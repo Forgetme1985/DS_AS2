@@ -12,7 +12,6 @@ public class WeatherConnection {
     protected BufferedReader socketReader;
     protected PrintStream socketWriter;
     protected BufferedReader consoleReader;
-    protected boolean isInTransaction;
     public WeatherConnection(String serverAddress)
     {
         try
@@ -51,45 +50,8 @@ public class WeatherConnection {
         }
         return listInput;
     }
-    public void postHTTP(List<String> weatherData)
-    {
-        if (socketWriter != null && !socket.isClosed())
-        {
-            try {
-                String httpPostMessage = "PUT /weather.json HTTP/1.1\n";
-                httpPostMessage += "User-Agent: ATOMClient/1/0\n";
-                httpPostMessage += "Content-Type: text/json\n";
-                String jsonString = JsonParser.getInstance().writeJson(weatherData);
-                httpPostMessage += "Content-Length: " + (jsonString.length() + 2) + "\n";
-                httpPostMessage += (jsonString + "\n");
-                //socketWriter.println(httpPostMessage);
-                socketWriter.flush();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    public String getResponse()
-    {
-        String result = "";
-        if(socketReader != null && !socket.isClosed())
-        {
-            try{
-                String inMsg = socketReader.readLine();
-                result+= inMsg;
-                while ((inMsg != null))
-                {
-                    inMsg = socketReader.readLine();
-                    result += inMsg;
-                }
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-        }
-        return result;
-    }
+
+
     public void closeSocket()
     {
         if(socket != null)

@@ -2,7 +2,7 @@ package assignment.weather;
 
 
 import java.io.IOException;
-import java.util.List;
+
 
 public class GETClient extends  WeatherConnection{
     public GETClient(String serverAddress)

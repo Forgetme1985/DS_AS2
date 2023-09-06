@@ -6,17 +6,17 @@ public class WeatherInformation
     public String name;
     public String state;
     public  String timeZone;
-    public String lat;
-    public  String lon;
+    public double lat;
+    public  double lon;
     public String local_date_time;
     public  String local_date_time_full;
-    public  String air_temp;
-    public  String apparent_t;
+    public  double air_temp;
+    public  double apparent_t;
     public  String cloud;
-    public  String dewpt;
-    public  String press;
-    public  String rel_hum;
+    public  double dewpt;
+    public  double press;
+    public  double rel_hum;
     public  String wind_dir;
-    public  String wind_spd_kmh;
-    public String wind_spd_kt;
+    public  double wind_spd_kmh;
+    public double wind_spd_kt;
 }
