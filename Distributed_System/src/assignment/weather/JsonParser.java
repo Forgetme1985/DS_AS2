@@ -1,9 +1,11 @@
 package assignment.weather;
 
 import java.util.*;
-
+import java.util.Scanner;
+import java.io.*;
 public class JsonParser {
 private static JsonParser instance;
+private List<String> lstWeatherInformation = new ArrayList<>();
     private JsonParser()
     {
 
@@ -19,10 +21,15 @@ private static JsonParser instance;
         WeatherInformation weatherInformation = new WeatherInformation();
         try {
             int indexOfOpenParenthesis = jsonString.indexOf("{");
+            int indexOfTheFirstComma = jsonString.indexOf(",");
+            String lamportClock = jsonString.substring(indexOfOpenParenthesis + 1,indexOfTheFirstComma);
+            String[] lamportClockElement = lamportClock.split(":");
+            weatherInformation.clockCounter = Integer.parseInt(lamportClockElement[1].trim());
+            int indexOfTheSecondOpenParenThesis = jsonString.lastIndexOf("{");
             int indexOfCloseParenthesis = jsonString.indexOf("}");
-            if(indexOfCloseParenthesis != -1 && indexOfCloseParenthesis != -1)
+            if(indexOfTheSecondOpenParenThesis != -1 && indexOfCloseParenthesis != -1)
             {
-                jsonString = jsonString.substring(indexOfOpenParenthesis + 1,indexOfCloseParenthesis);
+                jsonString = jsonString.substring(indexOfTheSecondOpenParenThesis + 1,indexOfCloseParenthesis);
                 String[] elements = jsonString.split(",");
                 if(elements.length != 17)
                 {
@@ -71,9 +78,11 @@ private static JsonParser instance;
         }
         return weatherInformation;
     }
-    public String writeJson(LinkedHashMap<String,String> weatherData)
+    public String writeJson(LamportClock clock,LinkedHashMap<String,String> weatherData)
     {
         String jsonString = "{";
+        jsonString += ("\"lamportClock\" : " + clock.counter + ",");
+        jsonString += "\"WeatherInformation\" : {";
         for(Map.Entry<String,String> elements:weatherData.entrySet())
         {
             String element = elements.getKey();
@@ -95,7 +104,78 @@ private static JsonParser instance;
             }
             jsonString+=element;
         }
-        jsonString+="}";
+        jsonString+="}}";
         return jsonString;
+    }
+    public String writeJson(LamportClock clock,WeatherInformation weatherInformation)
+    {
+        LinkedHashMap<String,String> weatherData = new LinkedHashMap<>();
+        weatherData.put("id",weatherInformation.id);
+        weatherData.put("name",weatherInformation.name);
+        weatherData.put("state",weatherInformation.state);
+        weatherData.put("timeZone",weatherInformation.timeZone);
+        weatherData.put("lat",String.valueOf(weatherInformation.lat));
+        weatherData.put("lon",String.valueOf(weatherInformation.lon));
+        weatherData.put("local_date_time",weatherInformation.local_date_time);
+        weatherData.put("local_date_time_full",weatherInformation.local_date_time_full);
+        weatherData.put("air_temp",String.valueOf(weatherInformation.air_temp));
+        weatherData.put("apparent_t",String.valueOf(weatherInformation.apparent_t));
+        weatherData.put("cloud",weatherInformation.cloud);
+        weatherData.put("dewpt",String.valueOf(weatherInformation.dewpt));
+        weatherData.put("press",String.valueOf(weatherInformation.press));
+        weatherData.put("rel_hum",String.valueOf(weatherInformation.rel_hum));
+        weatherData.put("wind_dir",weatherInformation.wind_dir);
+        weatherData.put("wind_spd_kmh",String.valueOf(weatherInformation.wind_spd_kmh));
+        weatherData.put("wind_spd_kt",String.valueOf(weatherInformation.wind_spd_kt));
+
+        return writeJson(clock,weatherData);
+    }
+    public String updateWeatherInformation(String weatherInformation)
+    {
+        String jsonString = "[";
+        lstWeatherInformation.add(weatherInformation);
+        for (int i = 0; i < lstWeatherInformation.size(); i++) {
+            if (i != lstWeatherInformation.size() - 1) {
+                jsonString += (lstWeatherInformation.get(i) + ",");
+            } else {
+                jsonString += lstWeatherInformation.get(i);
+            }
+        }
+        jsonString += "]";
+        return jsonString;
+    }
+    public ArrayList<WeatherInformation> readJsonFile()
+    {
+        ArrayList<WeatherInformation> lstWeatherInfor = new ArrayList<>();
+        File weatherFile = new File("weather.json");
+        try {
+            String jsonWeatherData = "";
+            Scanner scanner = new Scanner(weatherFile);
+            while (scanner.hasNextLine()) {
+                jsonWeatherData += scanner.nextLine();
+            }
+            jsonWeatherData = jsonWeatherData.replace("[","");
+            jsonWeatherData = jsonWeatherData.replace("]","");
+            int indexOfOpenParenThesis = jsonWeatherData.indexOf("{");
+            int indexOfCloseParenThesis = jsonWeatherData.indexOf('}');
+            while(indexOfOpenParenThesis != -1 && indexOfCloseParenThesis != -1)
+            {
+                String element = jsonWeatherData.substring(indexOfOpenParenThesis, indexOfCloseParenThesis + 1);
+                WeatherInformation weatherInformation = readJson(element);
+                jsonWeatherData = jsonWeatherData.replace(element + "}", "");
+                if(jsonWeatherData.charAt(0) == ',')
+                {
+                    jsonWeatherData.replace(",","");
+                }
+                lstWeatherInfor.add(weatherInformation);
+                indexOfOpenParenThesis = jsonWeatherData.indexOf("{");
+                indexOfCloseParenThesis = jsonWeatherData.indexOf('}');
+            }
+        }
+        catch (IOException e)
+        {
+            System.out.println("weather.json " + "is needed to be created");
+        }
+        return lstWeatherInfor;
     }
 }

@@ -8,19 +8,28 @@ public class ContentServer extends WeatherConnection {
         super(serverAddress);
         try {
             while (!socket.isClosed()) {
-                Thread.sleep(3000);
                 System.out.println("Send data from content server");
                 LinkedHashMap<String,String> weatherData = readingWeatherData(weatherFile);
                 String httpPostMessage = "PUT /weather.json HTTP/1.1\r\n";
                 httpPostMessage += "User-Agent: ATOMClient/1/0\r\n";
-                httpPostMessage += "Content-Type: text/json\r\n";
-                String jsonString = JsonParser.getInstance().writeJson(weatherData);
+                httpPostMessage += "Content-Type: application/json\r\n";
+                lamportClock.increaseCounter();
+                String jsonString = JsonParser.getInstance().writeJson(lamportClock,weatherData);
                 httpPostMessage += "Content-Length: " + jsonString.length()  + "\r\n";
-                httpPostMessage += (jsonString + "\n");
+                httpPostMessage += (jsonString + "\r\n");
                 socketWriter.println(httpPostMessage);
                 socketWriter.flush();
+
                 String inMsg = socketReader.readLine();
-                System.out.println("Server: " + inMsg);
+                while (!inMsg.contains("WeatherInformation") && !inMsg.contains("lamportClock"))
+                {
+                    System.out.println(inMsg);
+                    inMsg = socketReader.readLine();
+                }
+                System.out.println(inMsg);
+                WeatherInformation weatherInformation = JsonParser.getInstance().readJson(inMsg);
+                lamportClock.updateCounterReceive(weatherInformation.clockCounter);
+                Thread.sleep(30000);
             }
         }
         catch (Exception e)

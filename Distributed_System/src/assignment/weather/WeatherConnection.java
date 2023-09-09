@@ -3,8 +3,6 @@ package assignment.weather;
 import java.io.*;
 import java.net.Socket;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 public class WeatherConnection {
@@ -12,6 +10,7 @@ public class WeatherConnection {
     protected BufferedReader socketReader;
     protected PrintStream socketWriter;
     protected BufferedReader consoleReader;
+    protected LamportClock lamportClock;
     public WeatherConnection(String serverAddress)
     {
         try
@@ -26,6 +25,7 @@ public class WeatherConnection {
              consoleReader = new BufferedReader(
                     new InputStreamReader(System.in)
             );
+             lamportClock = new LamportClock();
              Runnable runnable = ()->handleCloseSocket();
              new Thread(runnable).start();
         }
@@ -34,23 +34,6 @@ public class WeatherConnection {
             e.printStackTrace();
         }
     }
-    public List<String> readInputFromSocket( )
-    {
-        ArrayList<String> listInput = new ArrayList<>();
-        if(socketReader != null) {
-            try {
-                String inStr = "";
-                while ((inStr = socketReader.readLine()) != null) {
-                    System.out.println(inStr);
-                    listInput.add(inStr);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return listInput;
-    }
-
 
     public void closeSocket()
     {

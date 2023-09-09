@@ -2,6 +2,7 @@ package assignment.weather;
 
 public class WeatherInformation
 {
+    public  int clockCounter;
     public String id;
     public String name;
     public String state;
