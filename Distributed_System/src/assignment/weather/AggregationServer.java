@@ -14,7 +14,10 @@ public class AggregationServer {
    private static LamportClock serverClock = new LamportClock();
     public static void main(String[] args)
     {
-
+        /**
+         * Start Server and waiting for connections
+         *
+         */
         try {
             int portNumber = 4567;
             if(args.length > 0)
@@ -24,6 +27,7 @@ public class AggregationServer {
            ServerSocket serverSocket = new ServerSocket(portNumber,100,
                     InetAddress.getByName("localhost"));
             System.out.println("Server started");
+            //Reading Json file to restore data if server crashed
             lstWeatherInformation = JsonParser.getInstance().readJsonFile();
             while(true)
             {
@@ -40,10 +44,12 @@ public class AggregationServer {
             e.printStackTrace();
         }
     }
-    public static  void handleClientRequest(Socket socket)
+    public static void handleClientRequest(Socket socket)
     {
         BufferedReader socketReader = null;
         PrintWriter socketWriter = null;
+        long startTime = System.currentTimeMillis();
+        String idContentServer = "";
         try{
             socketReader = new BufferedReader(
                     new InputStreamReader(socket.getInputStream()));
@@ -53,12 +59,37 @@ public class AggregationServer {
             String inMsg = null;
             while(!socket.isClosed())
             {
+                /**
+                 * Remove any content server if it doesn't send any message
+                 * within 30 seconds
+                 */
+                if(idContentServer.compareTo("")  != 0 && System.currentTimeMillis() - startTime >= 30000)
+                {
+                    for(int i = 0; i < lstWeatherInformation.size();i++)
+                    {
+                        if(lstWeatherInformation.get(i).id.compareTo(idContentServer) == 0)
+                        {
+                            lstWeatherInformation.remove(i);
+                            break;
+                        }
+                    }
+                    String temp = JsonParser.getInstance().removeWeatherInformation(idContentServer);
+                    FileWriter fileWriter = new FileWriter("weather.json");
+                    fileWriter.write(temp);
+                    fileWriter.close();
+                    jsonWeatherData = temp;
+                    break;
+                }
                 inMsg = socketReader.readLine();
                 if(inMsg != null && inMsg.length() > 0)
                 {
                     httpMessage += (inMsg + "\n");
                 }
                 else{
+                    /**
+                     * Handle HTTP PUT from content servers
+                     *
+                     */
                     if(httpMessage.startsWith("PUT"))
                     {
                         String[] lineMsg = httpMessage.split("\n");
@@ -71,7 +102,7 @@ public class AggregationServer {
                                 try
                                 {
                                     response = "HTTP/1.1 201 CREATED\r\n";
-                                    jsonWeatherData = JsonParser.getInstance().updateWeatherInformation(lineMsg[4]);
+                                    jsonWeatherData = JsonParser.getInstance().updateWeatherInformation(weatherInformation.id,lineMsg[4]);
                                     FileWriter fileWriter = new FileWriter("weather.json");
                                     fileWriter.write(jsonWeatherData);
                                     fileWriter.close();
@@ -88,15 +119,27 @@ public class AggregationServer {
                         else
                         {
                             weatherInformation = JsonParser.getInstance().readJson(lineMsg[4]);
+
                             if(weatherInformation != null)
                             {
                                 response = "HTTP/1.1 200 OK\r\n";
-                                String temp = JsonParser.getInstance().updateWeatherInformation(lineMsg[4]);
+                                String temp = JsonParser.getInstance().updateWeatherInformation(weatherInformation.id,lineMsg[4]);
                                 FileWriter fileWriter = new FileWriter("weather.json");
                                 fileWriter.write(temp);
                                 fileWriter.close();
                                 jsonWeatherData = temp;
-                                lstWeatherInformation.add(weatherInformation);
+                                int i;
+                                for(i = 0; i < lstWeatherInformation.size();i++)
+                                {
+                                    if(lstWeatherInformation.get(i).id.compareTo(weatherInformation.id) == 0)
+                                    {
+                                        lstWeatherInformation.set(i,weatherInformation);
+                                        break;
+                                    }
+                                }
+                                if(i == lstWeatherInformation.size())
+                                    lstWeatherInformation.add(weatherInformation);
+
                             }
                             else
                                 response = "HTTP/1.1 500 INTERNAL_SERVER_ERROR";
@@ -105,6 +148,7 @@ public class AggregationServer {
                         serverClock.increaseCounter();
                         response += "Server: AggregationServer\r\n";
                         response += "Content-Type: application/json\r\n";
+
                         String jsonString = JsonParser.getInstance().writeJson(serverClock,weatherInformation);
                         response += "Content-Length: " + jsonString.length()  + "\r\n";
                         response += "\r\n";
@@ -114,57 +158,29 @@ public class AggregationServer {
                         httpMessage = "";
                         response = "";
                         inMsg = null;
+                        startTime = System.currentTimeMillis();
+                        idContentServer = weatherInformation.id;
                     }
+                    /**
+                     * Handle HTTP GET from GET CLIENTS
+                     *
+                     */
                     else if( httpMessage.startsWith("GET"))
                     {
-                        String[] lineMsg = httpMessage.split("\n");
                         WeatherInformation weatherInformation = null;
-                        if(lineMsg.length == 5)
+                        if(lstWeatherInformation.size() > 0)
                         {
-                            lineMsg[4] = lineMsg[4].replace("{","");
-                            lineMsg[4] = lineMsg[4].replace("}","");
-                            String[] lamportClock = lineMsg[4].split(":");
-                            int counter = Integer.parseInt(lamportClock[1].trim());
-                            int i = 0;
-                            for(i = 0; i < lstWeatherInformation.size();i++)
-                            {
-                                if(lstWeatherInformation.get(i).clockCounter > counter)
-                                {
-                                    weatherInformation = lstWeatherInformation.get(i);
-                                    break;
-                                }
-                            }
-                            if(i == lstWeatherInformation.size())
-                            {
-                                response = "HTTP/1.1 503 Service Unavailable\r\n";
-                            }
-                            else
-                            {
-                                response = "HTTP/1.1 200 OK\r\n";
-                                response += "Server: AggregationServer\r\n";
-                                response += "Content-Type: application/json\r\n";
-                                String jsonString = JsonParser.getInstance().writeJson(serverClock,weatherInformation);
-                                response += "Content-Length: " + jsonString.length()  + "\r\n";
-                                response += "\r\n";
-                                response += (jsonString);
-                            }
+                            response = "HTTP/1.1 200 OK\r\n";
+                            response += "Server: AggregationServer\r\n";
+                            response += "Content-Type: application/json\r\n";
+                            String jsonString = JsonParser.getInstance().writeJson(serverClock, lstWeatherInformation.get(lstWeatherInformation.size() - 1));
+                            response += "Content-Length: " + jsonString.length() + "\r\n";
+                            response += "\r\n";
+                            response += (jsonString);
                         }
                         else
                         {
-                            if(lstWeatherInformation.size() > 0)
-                            {
-                                response = "HTTP/1.1 200 OK\r\n";
-                                response += "Server: AggregationServer\r\n";
-                                response += "Content-Type: application/json\r\n";
-                                String jsonString = JsonParser.getInstance().writeJson(serverClock, lstWeatherInformation.get(lstWeatherInformation.size() - 1));
-                                response += "Content-Length: " + jsonString.length() + "\r\n";
-                                response += "\r\n";
-                                response += (jsonString);
-                            }
-                            else
-                            {
-                                response = "HTTP/1.1 503 Service Unavailable\r\n";
-                            }
+                            response = "HTTP/1.1 503 Service Unavailable\r\n";
                         }
                         if(weatherInformation != null)
                         {

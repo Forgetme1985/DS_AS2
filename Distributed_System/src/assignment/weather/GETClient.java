@@ -5,6 +5,11 @@ import java.io.IOException;
 
 
 public class GETClient extends  WeatherConnection{
+    /**
+     *
+     * @param serverAddress: the address of the aggregation server
+     * Start client and sending http get every 20 seconds
+     */
     public GETClient(String serverAddress)
     {
         super(serverAddress);
@@ -30,7 +35,7 @@ public class GETClient extends  WeatherConnection{
                 System.out.println("id: " + weatherInformation.id);
                 System.out.println("name: " + weatherInformation.name);
                 System.out.println("state: " + weatherInformation.state);
-                System.out.println("timeZone: " + weatherInformation.timeZone);
+                System.out.println("time_zone: " + weatherInformation.time_zone);
                 System.out.println("lat: " + weatherInformation.lat);
                 System.out.println("lon: " + weatherInformation.lon);
                 System.out.println("local_date_time: " + weatherInformation.local_date_time);
@@ -46,7 +51,7 @@ public class GETClient extends  WeatherConnection{
                 System.out.println("wind_spd_kt: " + weatherInformation.wind_spd_kt);
 
                 lamportClock.updateCounterReceive(weatherInformation.clockCounter);
-                Thread.sleep(30000);
+                Thread.sleep(20000);
             }
         }
         catch (Exception e)

@@ -15,6 +15,10 @@ public class WeatherConnection {
     {
         try
         {
+            /**
+             *Start client and connect to the aggregation server
+             *
+             */
             URL url = new URL(serverAddress);
             socket = new Socket(url.getHost(),url.getPort());
             System.out.println("Started client " +socket.getLocalAddress());

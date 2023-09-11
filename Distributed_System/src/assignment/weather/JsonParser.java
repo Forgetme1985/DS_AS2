@@ -6,6 +6,12 @@ import java.io.*;
 public class JsonParser {
 private static JsonParser instance;
 private List<String> lstWeatherInformation = new ArrayList<>();
+
+    /**
+     *
+     * Singleton pattern for JsonParser
+     */
+
     private JsonParser()
     {
 
@@ -16,8 +22,15 @@ private List<String> lstWeatherInformation = new ArrayList<>();
             instance =new JsonParser();
         return instance;
     }
+
+    /**
+     *
+     * @param jsonString: this string is used to parse to a weather information object
+     * @return a weather information instance
+     * This result will be stored in the list of weather information in the aggregation server
+     */
     public WeatherInformation readJson(String jsonString)
-    {
+    {;
         WeatherInformation weatherInformation = new WeatherInformation();
         try {
             int indexOfOpenParenthesis = jsonString.indexOf("{");
@@ -51,7 +64,7 @@ private List<String> lstWeatherInformation = new ArrayList<>();
                     weatherInformation.id = mapperToken.get("id");
                     weatherInformation.name = mapperToken.get("name");
                     weatherInformation.state = mapperToken.get("state");
-                    weatherInformation.timeZone = mapperToken.get("timeZone");
+                    weatherInformation.time_zone = mapperToken.get("time_zone");
                     weatherInformation.lat = Double.parseDouble(mapperToken.get("lat").trim());
                     weatherInformation.lon = Double.parseDouble(mapperToken.get("lon"));
                     weatherInformation.local_date_time = mapperToken.get("local_date_time");
@@ -78,6 +91,16 @@ private List<String> lstWeatherInformation = new ArrayList<>();
         }
         return weatherInformation;
     }
+
+    /**
+     *
+     * @param clock: this clock is included into http body message,
+     * it is used for comparison with the aggregation server's clock
+     * in order to update the clock order following Lamport algorithm
+     * @param weatherData: is used to parse json
+     * @return jsonString: it is embedded in http body message to send to the
+     * aggregation server.
+     */
     public String writeJson(LamportClock clock,LinkedHashMap<String,String> weatherData)
     {
         String jsonString = "{";
@@ -107,13 +130,22 @@ private List<String> lstWeatherInformation = new ArrayList<>();
         jsonString+="}}";
         return jsonString;
     }
+    /**
+     *
+     * @param clock: this clock is included into http body message,
+     * it is used for comparison with the aggregation server's clock
+     * in order to update the clock order following Lamport algorithm
+     * @param weatherInformation: is used to parse json
+     * @return jsonString: it is embedded in http body message to send to the
+     * aggregation server.
+     */
     public String writeJson(LamportClock clock,WeatherInformation weatherInformation)
     {
         LinkedHashMap<String,String> weatherData = new LinkedHashMap<>();
         weatherData.put("id",weatherInformation.id);
         weatherData.put("name",weatherInformation.name);
         weatherData.put("state",weatherInformation.state);
-        weatherData.put("timeZone",weatherInformation.timeZone);
+        weatherData.put("time_zone",weatherInformation.time_zone);
         weatherData.put("lat",String.valueOf(weatherInformation.lat));
         weatherData.put("lon",String.valueOf(weatherInformation.lon));
         weatherData.put("local_date_time",weatherInformation.local_date_time);
@@ -130,10 +162,31 @@ private List<String> lstWeatherInformation = new ArrayList<>();
 
         return writeJson(clock,weatherData);
     }
-    public String updateWeatherInformation(String weatherInformation)
+
+    /**
+     *
+     * @param id: is used to identify content server which send the weather information
+     * @param weatherInformation: is used to add to the list of weather information in the
+     * aggregation server or is used to update if it is already in the list
+     * @return: updated jsonString
+     */
+    public String updateWeatherInformation(String id,String weatherInformation)
     {
         String jsonString = "[";
-        lstWeatherInformation.add(weatherInformation);
+        int j;
+        for(j = 0; j < lstWeatherInformation.size();j++)
+        {
+           if(lstWeatherInformation.get(j).contains(id))
+           {
+               lstWeatherInformation.set(j,weatherInformation);
+               break;
+           }
+        }
+        if(j == lstWeatherInformation.size()) {
+            System.out.println("add new content server: " + id);
+            lstWeatherInformation.add(weatherInformation);
+        }
+
         for (int i = 0; i < lstWeatherInformation.size(); i++) {
             if (i != lstWeatherInformation.size() - 1) {
                 jsonString += (lstWeatherInformation.get(i) + ",");
@@ -144,6 +197,42 @@ private List<String> lstWeatherInformation = new ArrayList<>();
         jsonString += "]";
         return jsonString;
     }
+    /**
+     *
+     * @param id: is used to identify content server which send the weather information,
+     * remove the weather information if content server doesn't send any message during last
+     * 30 seconds
+     * @return: updated jsonString
+     */
+    public  String removeWeatherInformation(String id)
+    {
+        String jsonString = "[";
+        int j;
+        for(j = 0; j < lstWeatherInformation.size();j++)
+        {
+            if(lstWeatherInformation.get(j).contains(id))
+            {
+                lstWeatherInformation.remove(j);
+                System.out.println("Remove content server: " + id);
+                break;
+            }
+        }
+        for (int i = 0; i < lstWeatherInformation.size(); i++) {
+            if (i != lstWeatherInformation.size() - 1) {
+                jsonString += (lstWeatherInformation.get(i) + ",");
+            } else {
+                jsonString += lstWeatherInformation.get(i);
+            }
+        }
+        jsonString += "]";
+        return jsonString;
+    }
+
+    /**
+     * Reading data from weather.json
+     * @return: the list of weather information objects , the list is used in the
+     * aggregation server for communicating with clients and content servers
+     */
     public ArrayList<WeatherInformation> readJsonFile()
     {
         ArrayList<WeatherInformation> lstWeatherInfor = new ArrayList<>();
@@ -163,7 +252,7 @@ private List<String> lstWeatherInformation = new ArrayList<>();
                 String element = jsonWeatherData.substring(indexOfOpenParenThesis, indexOfCloseParenThesis + 1);
                 WeatherInformation weatherInformation = readJson(element);
                 jsonWeatherData = jsonWeatherData.replace(element + "}", "");
-                if(jsonWeatherData.charAt(0) == ',')
+                if(jsonWeatherData.length() > 0 && jsonWeatherData.charAt(0) == ',')
                 {
                     jsonWeatherData.replace(",","");
                 }

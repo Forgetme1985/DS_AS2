@@ -1,12 +1,16 @@
 package assignment.weather;
 
+/**
+ * The weather information object, it is parsed from json
+ *
+ */
 public class WeatherInformation
 {
     public  int clockCounter;
     public String id;
     public String name;
     public String state;
-    public  String timeZone;
+    public  String time_zone;
     public double lat;
     public  double lon;
     public String local_date_time;

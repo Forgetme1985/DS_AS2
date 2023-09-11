@@ -4,6 +4,12 @@ import java.io.*;
 import java.util.*;
 
 public class ContentServer extends WeatherConnection {
+    /**
+     *
+     * @param serverAddress : the address of the aggregation server
+     * @param weatherFile: the weather.txt
+     *  Start content server and sending http put every 20 seconds
+     */
     public ContentServer(String serverAddress,File weatherFile) {
         super(serverAddress);
         try {
@@ -29,7 +35,7 @@ public class ContentServer extends WeatherConnection {
                 System.out.println(inMsg);
                 WeatherInformation weatherInformation = JsonParser.getInstance().readJson(inMsg);
                 lamportClock.updateCounterReceive(weatherInformation.clockCounter);
-                Thread.sleep(30000);
+                Thread.sleep(20000);
             }
         }
         catch (Exception e)
