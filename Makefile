@@ -1,21 +1,21 @@
 VERSION_NUMBER := 1.0
 
 # Location of trees.
-SOURCE_DIR  = ./src/assignment/weather
-OUTPUT_DIR  = ./out/production/Distribute_System
+SOURCE_DIR  = ./Distributed_System/src/assignment/weather
+OUTPUT_DIR  = ./Distributed_System/out/production/Distribute_System
 
 #Java tools
 JAVAC = javac
 JFLAGS =  -d . -classpath . 
 #Compile
 sourcefiles = \
-AggregationServer.java\
+WeatherInformation.java\
+LamportClock.java\
+JsonParser.java\
+WeatherConnection.java\
 ContentServer.java\
 GETClient.java\
-JsonParser.java\
-LamportClock.java\
-WeatherConnection.java\
-WeatherInformation.java
+AggregationServer.java
 
 
 classfiles = $(sourcefiles:.java=.class)
