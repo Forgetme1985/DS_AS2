@@ -41,7 +41,6 @@ open the new terminal: sh Clients.sh
 
 note: ContentServer1.sh reading weather1.txt file whereas ContentServer2.sh reading weather2.txt
 
-T
 
 
 
