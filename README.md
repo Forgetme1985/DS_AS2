@@ -21,9 +21,7 @@ We have one paramenter for the client program which tells us about the aggregati
    
 AggregationServer.sh
 
-ContentServer1.sh
-
-ContentServer2.sh
+ContentServer.sh (this file will run two content servers at the same time)
 
 Clients.sh
 
@@ -31,15 +29,15 @@ Clients.sh
 In order to run shell files in the mac terminal:
 
 
+
 open the new terminal: sh AggregationServer.sh
 
-open the new terminal: sh ContentServer1.sh
+open the new terminal: sh ContentServer.sh
 
-open the new terminal: sh ContentServer2.sh
 
 open the new terminal: sh Clients.sh
 
-note: ContentServer1.sh reading weather1.txt file whereas ContentServer2.sh reading weather2.txt
+note: two content servers: one reads weather1.txt file and the other reads weather2.txt
 
 And also we have the design sketch file (v1.1) which describes the system
 
