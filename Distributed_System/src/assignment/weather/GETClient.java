@@ -8,13 +8,13 @@ public class GETClient extends  WeatherConnection{
     /**
      *
      * @param serverAddress: the address of the aggregation server
-     * Start client and sending http get every 20 seconds
+     * Start client and sending http get every 30 seconds
      */
     public GETClient(String serverAddress)
     {
         super(serverAddress);
         try {
-            while (!socket.isClosed()) {
+            //while (!socket.isClosed()) {
                 String httpMessage = "GET / HTTP/1.1\r\n";
                 httpMessage += "User-Agent: ATOMClient/1/0\r\n";
                 httpMessage += "Content-Type: application/json\r\n";
@@ -51,8 +51,8 @@ public class GETClient extends  WeatherConnection{
                 System.out.println("wind_spd_kt: " + weatherInformation.wind_spd_kt);
 
                 lamportClock.updateCounterReceive(weatherInformation.clockCounter);
-                Thread.sleep(20000);
-            }
+             //   Thread.sleep(30000);
+           // }
         }
         catch (Exception e)
         {

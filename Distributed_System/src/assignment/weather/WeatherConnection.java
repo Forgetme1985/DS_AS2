@@ -30,8 +30,8 @@ public class WeatherConnection {
                     new InputStreamReader(System.in)
             );
              lamportClock = new LamportClock();
-             Runnable runnable = ()->handleCloseSocket();
-             new Thread(runnable).start();
+            /* Runnable runnable = ()->handleCloseSocket();
+             new Thread(runnable).start();*/
         }
         catch (Exception e)
         {

@@ -28,5 +28,9 @@ public class LamportClock {
         {
             counter = receiveCounter;
         }
+        else if(receiveCounter == counter)//concurrency occur
+        {
+
+        }
     }
 }

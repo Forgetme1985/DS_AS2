@@ -8,12 +8,12 @@ public class ContentServer extends WeatherConnection {
      *
      * @param serverAddress : the address of the aggregation server
      * @param weatherFile: the weather.txt
-     *  Start content server and sending http put every 20 seconds
+     *  Start content server and sending http put every 30 seconds
      */
     public ContentServer(String serverAddress,File weatherFile) {
         super(serverAddress);
         try {
-            while (!socket.isClosed()) {
+            //while (!socket.isClosed()) {
                 System.out.println("Send data from content server");
                 LinkedHashMap<String,String> weatherData = readingWeatherData(weatherFile);
                 String httpPostMessage = "PUT /weather.json HTTP/1.1\r\n";
@@ -35,8 +35,8 @@ public class ContentServer extends WeatherConnection {
                 System.out.println(inMsg);
                 WeatherInformation weatherInformation = JsonParser.getInstance().readJson(inMsg);
                 lamportClock.updateCounterReceive(weatherInformation.clockCounter);
-                Thread.sleep(20000);
-            }
+                //Thread.sleep(30000);
+            //}
         }
         catch (Exception e)
         {
