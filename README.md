@@ -61,9 +61,18 @@ open the new terminal: sh ContentServer.sh
 
 open the new terminal: sh Clients.sh
 
-note: two content servers: one reads weather1.txt file and the other reads weather2.txt
 
+* Note:
+Two content servers: one reads weather1.txt file and the other reads weather2.txt
 And also we have the design sketch file (v1.1) which describes the system
+
+in order to run a loop every 30 seconds for each PUT or GET, we can use 
+sh ContentServer_Loop.sh
+sh Clients_Loop.sh
+
+The combination of loop files and the use of SIGTERM to terminate the program to test the special cases such as the server crash or unexpect behaviors from the clients or the content servers
+
+
 
 
 
